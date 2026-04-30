@@ -1,0 +1,93 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  CUSTOMER
+  ADMIN
+}
+
+enum OrderStatus {
+  PENDING
+  SUBMITTED
+}
+
+enum FulfillmentMethod {
+  PICKUP
+  DELIVERY
+}
+
+enum PaymentMethod {
+  CARD
+  PAY_ON_ARRIVAL
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  fullName     String
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(CUSTOMER)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  cartItems    CartItem[]
+  orders       Order[]
+}
+
+model CartItem {
+  id              Int      @id @default(autoincrement())
+  userId          Int
+  productId       String
+  productName     String
+  productImageUrl String?
+  unitPrice       Float
+  quantity        Int      @default(1)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@index([userId])
+}
+
+model Order {
+  id                Int               @id @default(autoincrement())
+  userId            Int
+  status            OrderStatus       @default(PENDING)
+  subtotal          Float
+  fulfillmentMethod FulfillmentMethod
+  paymentMethod     PaymentMethod
+  deliveryAddress   String?
+  pickupLocation    String?
+  contactPhone      String?
+  notes             String?
+  cardholderName    String?
+  cardLast4         String?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  user              User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items             OrderItem[]
+
+  @@index([userId])
+}
+
+model OrderItem {
+  id              Int      @id @default(autoincrement())
+  orderId         Int
+  productId       String
+  productName     String
+  productImageUrl String?
+  unitPrice       Float
+  quantity        Int
+  lineTotal       Float
+  createdAt       DateTime @default(now())
+  order           Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+}
