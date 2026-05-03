@@ -91,3 +91,22 @@ model OrderItem {
 
   @@index([orderId])
 }
+
+model Product {
+  id          String   @id
+  name        String
+  description String?
+  category    String?
+  tags        String?
+  imageUrl    String?
+  price       Float
+  inStock     Boolean  @default(true)
+  inventory   Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([name])
+  @@index([category])
+  @@index([inStock, isActive])
+}

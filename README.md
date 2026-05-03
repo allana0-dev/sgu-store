@@ -52,6 +52,17 @@ Use `Authorization: Bearer <accessToken>` for protected routes such as `/auth/me
 
 - `POST /cart/guest-checkout` - create an order without signing in (requires `items` in request body)
 
+## Product Catalog Endpoints
+
+- `POST /products` - create catalog product
+- `PATCH /products/:id` - update catalog product
+- `GET /products` - list catalog products
+- `GET /products/search?query=hoodie&limit=20&onlyInStock=true` - general product search
+
+## Recommendation Endpoint
+
+- `POST /recommendations` - AI-ranked product recommendations based on user intent and current DB catalog
+
 Example body for `POST /cart/items`:
 
 ```json
@@ -91,6 +102,35 @@ Example body for `POST /cart/checkout`:
 
 Use `fulfillmentMethod: "DELIVERY"` with `deliveryAddress` for delivery orders, or `paymentMethod: "PAY_ON_ARRIVAL"` when no card payment is collected during checkout. Only store the card last four digits; do not send or persist raw card numbers.
 
+Example body for `POST /products`:
+
+```json
+{
+  "id": "hoodie-001",
+  "name": "SGU Hoodie",
+  "description": "Warm fleece hoodie for campus evenings.",
+  "category": "Apparel",
+  "tags": ["hoodie", "campus", "fleece"],
+  "imageUrl": "https://example.com/hoodie.jpg",
+  "price": 29.99,
+  "inventory": 40,
+  "inStock": true,
+  "isActive": true
+}
+```
+
+Example body for `POST /recommendations`:
+
+```json
+{
+  "query": "I need something warm for late study sessions",
+  "limit": 6,
+  "userId": 1
+}
+```
+
+If `OPENAI_API_KEY` is not set or the OpenAI call fails, the endpoint returns deterministic DB-based fallback matches.
+
 ## Deployment Notes
 
 For Render or Railway, use a build command like:
@@ -104,6 +144,11 @@ Use a start command like:
 ```bash
 npm run start:prod
 ```
+
+Set these additional environment variables for AI recommendations:
+
+- `OPENAI_API_KEY` - your OpenAI API key
+- `OPENAI_MODEL` - optional, defaults to `gpt-5.2`
 
 ## Quick Publish Link (Render)
 
