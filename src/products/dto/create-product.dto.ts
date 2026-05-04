@@ -1,4 +1,4 @@
-import { Transform } from 'class-transformer';
+import { Transform } from "class-transformer";
 import {
   ArrayMaxSize,
   IsArray,
@@ -7,16 +7,18 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  Max,
   MaxLength,
   Min,
   MinLength,
-} from 'class-validator';
+} from "class-validator";
 
 export class CreateProductDto {
+  @IsOptional()
   @IsString()
   @MinLength(1)
   @MaxLength(120)
-  id: string;
+  id?: string;
 
   @IsString()
   @MinLength(1)
@@ -48,6 +50,18 @@ export class CreateProductDto {
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)
   price: number;
+
+  @IsOptional()
+  @IsNumber({ maxDecimalPlaces: 1 })
+  @Min(0)
+  @Max(5)
+  rating?: number;
+
+  @IsOptional()
+  @Transform(({ value }) => (value === undefined ? value : Number(value)))
+  @IsInt()
+  @Min(0)
+  reviewCount?: number;
 
   @IsOptional()
   @Transform(({ value }) => (value === undefined ? value : Number(value)))
