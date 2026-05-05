@@ -39,6 +39,15 @@ The API defaults to `http://localhost:4000`.
 
 Use `Authorization: Bearer <accessToken>` for protected routes such as `/auth/me`.
 
+## User Endpoints (Admin Protected)
+
+- `GET /users?limit=250&page=1` - list users (without password hashes)
+- `GET /users/:id` - get one user
+- `PATCH /users/:id` - update `fullName`, `email`, and/or `role`
+- `DELETE /users/:id` - delete a user
+
+All `/users` endpoints require an admin JWT (`role: ADMIN`).
+
 ## Cart Endpoints (Protected)
 
 - `GET /cart` - fetch logged-in user's cart
