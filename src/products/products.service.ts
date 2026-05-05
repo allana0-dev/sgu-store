@@ -6,17 +6,37 @@ import { CreateProductDto } from "./dto/create-product.dto";
 import { SearchProductsDto } from "./dto/search-products.dto";
 import { UpdateProductDto } from "./dto/update-product.dto";
 
+type ProductPricing = {
+  currency: string;
+  basePrice: number;
+  salePrice: number | null;
+  compareAtPrice: number | null;
+};
+
+type ProductVariant = {
+  label: string;
+  options: string[];
+};
+
 export type CatalogProduct = {
   id: string;
   name: string;
-  description: string | null;
-  category: string | null;
+  subtitle: string;
+  description: string;
+  images: string[];
+  image: string;
+  href: string;
+  pricing: ProductPricing;
+  inventoryStatus: "in_stock" | "low_stock" | "out_of_stock";
+  inventoryLabel: string;
+  category: string;
+  department: string;
   tags: string[];
-  imageUrl: string | null;
-  price: number;
+  gender: "women" | "men" | "unisex";
+  dietary: string[] | null;
+  variants: ProductVariant[] | null;
   rating: number | null;
   reviewCount: number;
-  inStock: boolean;
   inventory: number;
   isActive: boolean;
   createdAt: Date;
@@ -35,16 +55,33 @@ export class ProductsService {
       data: {
         id,
         name: dto.name.trim(),
-        description: dto.description?.trim() || null,
+        subtitle: dto.subtitle.trim(),
+        description: dto.description?.trim() || "",
+        images: this.serializeStringArray(dto.images),
+        image: dto.image.trim(),
+        href: dto.href.trim(),
+        currency: dto.pricing.currency.trim().toUpperCase(),
+        basePrice: this.roundCurrency(dto.pricing.basePrice),
+        salePrice:
+          dto.pricing.salePrice === null
+            ? null
+            : this.roundCurrency(dto.pricing.salePrice),
+        compareAtPrice:
+          dto.pricing.compareAtPrice === null
+            ? null
+            : this.roundCurrency(dto.pricing.compareAtPrice),
+        inventoryStatus: this.normalizeInventoryStatus(dto.inventoryStatus),
+        inventoryLabel: dto.inventoryLabel.trim(),
         category: dto.category?.trim() || null,
+        department: dto.department.trim(),
         tags: tags.length > 0 ? tags.join(", ") : null,
-        imageUrl: dto.imageUrl || null,
-        price: this.roundCurrency(dto.price),
+        gender: dto.gender.trim().toLowerCase(),
+        dietary: dto.dietary === null ? null : this.serializeStringArray(dto.dietary),
+        variants: dto.variants === null ? null : this.serializeVariants(dto.variants),
         rating:
           dto.rating === undefined ? null : this.normalizeRating(dto.rating),
         reviewCount: dto.reviewCount ?? 0,
         inventory: dto.inventory ?? 0,
-        inStock: dto.inStock ?? (dto.inventory ?? 0) > 0,
         isActive: dto.isActive ?? true,
       },
     });
@@ -68,19 +105,61 @@ export class ProductsService {
       where: { id: normalizedId },
       data: {
         name: dto.name?.trim(),
-        description: dto.description?.trim(),
-        category: dto.category?.trim(),
+        subtitle: dto.subtitle?.trim(),
+        description: dto.description === undefined ? undefined : dto.description.trim(),
+        images:
+          dto.images === undefined
+            ? undefined
+            : this.serializeStringArray(dto.images),
+        image: dto.image?.trim(),
+        href: dto.href?.trim(),
+        currency: dto.pricing?.currency?.trim().toUpperCase(),
+        basePrice:
+          dto.pricing?.basePrice === undefined
+            ? undefined
+            : this.roundCurrency(dto.pricing.basePrice),
+        salePrice:
+          dto.pricing?.salePrice === undefined
+            ? undefined
+            : dto.pricing.salePrice === null
+              ? null
+              : this.roundCurrency(dto.pricing.salePrice),
+        compareAtPrice:
+          dto.pricing?.compareAtPrice === undefined
+            ? undefined
+            : dto.pricing.compareAtPrice === null
+              ? null
+              : this.roundCurrency(dto.pricing.compareAtPrice),
+        inventoryStatus:
+          dto.inventoryStatus === undefined
+            ? undefined
+            : this.normalizeInventoryStatus(dto.inventoryStatus),
+        inventoryLabel: dto.inventoryLabel?.trim(),
+        category:
+          dto.category === undefined
+            ? undefined
+            : dto.category.trim(),
+        department: dto.department?.trim(),
         tags: tags ? (tags.length > 0 ? tags.join(", ") : null) : undefined,
-        imageUrl: dto.imageUrl,
-        price:
-          dto.price === undefined ? undefined : this.roundCurrency(dto.price),
+        gender: dto.gender?.trim().toLowerCase(),
+        dietary:
+          dto.dietary === undefined
+            ? undefined
+            : dto.dietary === null
+              ? null
+              : this.serializeStringArray(dto.dietary),
+        variants:
+          dto.variants === undefined
+            ? undefined
+            : dto.variants === null
+              ? null
+              : this.serializeVariants(dto.variants),
         rating:
           dto.rating === undefined
             ? undefined
             : this.normalizeRating(dto.rating),
         reviewCount: dto.reviewCount,
         inventory: dto.inventory,
-        inStock: dto.inStock,
         isActive: dto.isActive,
       },
     });
@@ -90,7 +169,7 @@ export class ProductsService {
 
   async list(limit = 50): Promise<CatalogProduct[]> {
     const products = await this.prisma.product.findMany({
-      orderBy: [{ inStock: "desc" }, { updatedAt: "desc" }],
+      orderBy: [{ updatedAt: "desc" }],
       take: limit,
     });
 
@@ -119,15 +198,18 @@ export class ProductsService {
 
     const where: Prisma.ProductWhereInput = {
       isActive: true,
-      ...(onlyInStock ? { inStock: true } : {}),
+      ...(onlyInStock ? { inventoryStatus: { not: "out_of_stock" } } : {}),
       ...(query
         ? {
             OR: [
               { id: { contains: query } },
               { name: { contains: query } },
+              { subtitle: { contains: query } },
               { description: { contains: query } },
               { category: { contains: query } },
+              { department: { contains: query } },
               { tags: { contains: query } },
+              { dietary: { contains: query } },
             ],
           }
         : {}),
@@ -135,7 +217,7 @@ export class ProductsService {
 
     const products = await this.prisma.product.findMany({
       where,
-      orderBy: [{ inStock: "desc" }, { updatedAt: "desc" }],
+      orderBy: [{ updatedAt: "desc" }],
       take: limit,
     });
 
@@ -162,7 +244,7 @@ export class ProductsService {
     const excludedIds = directMatches.map((product) => product.id);
     const supplementalWhere: Prisma.ProductWhereInput = {
       isActive: true,
-      inStock: true,
+      inventoryStatus: { not: "out_of_stock" },
       ...(excludedIds.length > 0 ? { id: { notIn: excludedIds } } : {}),
     };
 
@@ -181,22 +263,65 @@ export class ProductsService {
   private toCatalogProduct(product: {
     id: string;
     name: string;
+    subtitle: string;
     description: string | null;
+    images: string;
+    image: string;
+    href: string;
+    currency: string;
+    basePrice: number;
+    salePrice: number | null;
+    compareAtPrice: number | null;
+    inventoryStatus: string;
+    inventoryLabel: string;
     category: string | null;
+    department: string;
     tags: string | null;
-    imageUrl: string | null;
-    price: number;
+    gender: string;
+    dietary: string | null;
+    variants: string | null;
     rating: number | null;
     reviewCount: number;
-    inStock: boolean;
     inventory: number;
     isActive: boolean;
     createdAt: Date;
     updatedAt: Date;
   }): CatalogProduct {
     return {
-      ...product,
+      id: product.id,
+      name: product.name,
+      subtitle: product.subtitle,
+      description: product.description ?? "",
+      images: this.deserializeStringArray(product.images),
+      image: product.image,
+      href: product.href,
+      pricing: {
+        currency: product.currency,
+        basePrice: this.roundCurrency(product.basePrice),
+        salePrice:
+          product.salePrice === null ? null : this.roundCurrency(product.salePrice),
+        compareAtPrice:
+          product.compareAtPrice === null
+            ? null
+            : this.roundCurrency(product.compareAtPrice),
+      },
+      inventoryStatus: this.normalizeInventoryStatus(product.inventoryStatus),
+      inventoryLabel: product.inventoryLabel,
+      category: product.category ?? "",
+      department: product.department,
       tags: this.deserializeTags(product.tags),
+      gender: this.normalizeGender(product.gender),
+      dietary:
+        product.dietary === null
+          ? null
+          : this.deserializeStringArray(product.dietary),
+      variants: this.deserializeVariants(product.variants),
+      rating: product.rating,
+      reviewCount: product.reviewCount,
+      inventory: product.inventory,
+      isActive: product.isActive,
+      createdAt: product.createdAt,
+      updatedAt: product.updatedAt,
     };
   }
 
@@ -222,6 +347,62 @@ export class ProductsService {
       .filter((tag) => tag.length > 0);
   }
 
+  private serializeStringArray(values: string[]): string {
+    return values
+      .map((value) => value.trim())
+      .filter((value) => value.length > 0)
+      .join(", ");
+  }
+
+  private deserializeStringArray(values: string | null): string[] {
+    if (!values) {
+      return [];
+    }
+
+    return values
+      .split(",")
+      .map((value) => value.trim())
+      .filter((value) => value.length > 0);
+  }
+
+  private serializeVariants(variants: Array<{ label: string; options: string[] }>): string {
+    return JSON.stringify(
+      variants.map((variant) => ({
+        label: variant.label.trim(),
+        options: variant.options
+          .map((option) => option.trim())
+          .filter((option) => option.length > 0),
+      })),
+    );
+  }
+
+  private deserializeVariants(variants: string | null): ProductVariant[] | null {
+    if (!variants) {
+      return null;
+    }
+
+    try {
+      const parsed = JSON.parse(variants) as Array<{ label?: string; options?: string[] }>;
+      if (!Array.isArray(parsed)) {
+        return null;
+      }
+
+      const normalized = parsed
+        .filter((variant) => typeof variant?.label === "string" && Array.isArray(variant?.options))
+        .map((variant) => ({
+          label: (variant.label as string).trim(),
+          options: (variant.options as string[])
+            .map((option) => option.trim())
+            .filter((option) => option.length > 0),
+        }))
+        .filter((variant) => variant.label.length > 0 && variant.options.length > 0);
+
+      return normalized.length > 0 ? normalized : null;
+    } catch {
+      return null;
+    }
+  }
+
   private roundCurrency(value: number): number {
     return Math.round((value + Number.EPSILON) * 100) / 100;
   }
@@ -235,5 +416,25 @@ export class ProductsService {
       5,
       Math.max(0, Math.round((value + Number.EPSILON) * 10) / 10),
     );
+  }
+
+  private normalizeInventoryStatus(value: string): "in_stock" | "low_stock" | "out_of_stock" {
+    const normalized = value.trim().toLowerCase();
+
+    if (normalized === "low_stock" || normalized === "out_of_stock") {
+      return normalized;
+    }
+
+    return "in_stock";
+  }
+
+  private normalizeGender(value: string): "women" | "men" | "unisex" {
+    const normalized = value.trim().toLowerCase();
+
+    if (normalized === "women" || normalized === "men") {
+      return normalized;
+    }
+
+    return "unisex";
   }
 }

@@ -93,24 +93,35 @@ model OrderItem {
 }
 
 model Product {
-  id          String   @id
-  name        String
-  description String?
-  category    String?
-  tags        String?
-  imageUrl    String?
-  price       Float
-  rating      Float?
-  reviewCount Int      @default(0)
-  inStock     Boolean  @default(true)
-  inventory   Int      @default(0)
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id             String   @id
+  name           String
+  subtitle       String
+  description    String?
+  images         String
+  image          String
+  href           String
+  currency       String   @default("USD")
+  basePrice      Float
+  salePrice      Float?
+  compareAtPrice Float?
+  inventoryStatus String  @default("in_stock")
+  inventoryLabel String
+  category       String?
+  department     String
+  tags           String?
+  gender         String
+  dietary        String?
+  variants       String?
+  rating         Float?
+  reviewCount    Int      @default(0)
+  inventory      Int      @default(0)
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   @@index([name])
   @@index([category])
-  @@index([inStock, isActive])
+  @@index([inventoryStatus, isActive])
 }
 
 model Review {

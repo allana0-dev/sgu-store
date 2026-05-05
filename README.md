@@ -115,16 +115,32 @@ Example body for `POST /products`:
 
 ```json
 {
-  "id": "hoodie-001",
-  "name": "SGU Hoodie",
-  "description": "Warm fleece hoodie for campus evenings.",
-  "category": "Apparel",
-  "tags": ["hoodie", "campus", "fleece"],
-  "imageUrl": "https://example.com/hoodie.jpg",
-  "price": 29.99,
-  "inventory": 40,
-  "inStock": true,
-  "isActive": true
+  "id": "sgu-water-bottle",
+  "name": "SGU Water Bottle",
+  "subtitle": "Insulated stainless steel",
+  "description": "Keep your drinks cold for 24 hours or hot for 12 hours with this premium insulated stainless steel water bottle. Features the SGU crest.",
+  "images": ["/images/waterbottle.png"],
+  "image": "/images/waterbottle.png",
+  "href": "/store/sgu-water-bottle",
+  "pricing": {
+    "currency": "USD",
+    "basePrice": 20,
+    "salePrice": 18,
+    "compareAtPrice": 20
+  },
+  "inventoryStatus": "low_stock",
+  "inventoryLabel": "Only 3 left",
+  "category": "essentials",
+  "department": "Apparel & Accessories",
+  "tags": ["drinkware", "merch", "essentials"],
+  "gender": "unisex",
+  "dietary": null,
+  "variants": [
+    {
+      "label": "Size",
+      "options": ["18 oz", "32 oz", "40 oz"]
+    }
+  ]
 }
 ```
 

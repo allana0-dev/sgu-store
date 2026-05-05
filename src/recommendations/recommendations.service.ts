@@ -134,11 +134,13 @@ export class RecommendationsService {
               candidates: params.candidates.map((product) => ({
                 productId: product.id,
                 name: product.name,
+                subtitle: product.subtitle,
                 description: product.description,
                 category: product.category,
+                department: product.department,
                 tags: product.tags,
-                price: product.price,
-                inStock: product.inStock,
+                price: product.pricing.salePrice ?? product.pricing.basePrice,
+                inventoryStatus: product.inventoryStatus,
               })),
               outputRules: {
                 onlyUseGivenProductIds: true,

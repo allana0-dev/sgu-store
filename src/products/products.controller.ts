@@ -6,10 +6,7 @@ import {
   Patch,
   Post,
   Query,
-  UseGuards,
 } from "@nestjs/common";
-import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
-import { AdminGuard } from "../auth/guards/admin.guard";
 import { CreateProductDto } from "./dto/create-product.dto";
 import { SearchProductsDto } from "./dto/search-products.dto";
 import { UpdateProductDto } from "./dto/update-product.dto";
@@ -19,13 +16,11 @@ import { ProductsService } from "./products.service";
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
-  @UseGuards(JwtAuthGuard, AdminGuard)
   @Post()
   createProduct(@Body() dto: CreateProductDto) {
     return this.productsService.create(dto);
   }
 
-  @UseGuards(JwtAuthGuard, AdminGuard)
   @Patch(":id")
   updateProduct(@Param("id") id: string, @Body() dto: UpdateProductDto) {
     return this.productsService.update(id, dto);
