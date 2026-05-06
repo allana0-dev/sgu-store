@@ -1,15 +1,25 @@
+databases:
+  - name: sgu-ecommerce-db
+    plan: free
+    region: oregon
+    databaseName: sgu_store
+    user: sgu_store_user
+
 services:
   - type: web
     name: sgu-ecommerce-backend
     env: node
     plan: free
     region: oregon
-    buildCommand: npm install && npm run prisma:deploy && npm run build
+    buildCommand: npm install && npm run build
+    preDeployCommand: npm run prisma:deploy
     startCommand: npm run start:prod
     autoDeploy: true
     envVars:
       - key: DATABASE_URL
-        value: file:./dev.db
+        fromDatabase:
+          name: sgu-ecommerce-db
+          property: connectionString
       - key: JWT_SECRET
         sync: false
       - key: JWT_EXPIRES_IN

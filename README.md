@@ -1,6 +1,6 @@
 # SGU E-Commerce Backend Prototype
 
-NestJS + Prisma + SQLite backend prototype for the St. George's University campus retail e-commerce platform.
+NestJS + Prisma + PostgreSQL backend prototype for the St. George's University campus retail e-commerce platform.
 
 ## Setup
 
@@ -15,6 +15,8 @@ npm install
 ```bash
 cp .env.example .env
 ```
+
+Ensure PostgreSQL is running and update `DATABASE_URL` in `.env` if your local credentials/port differ from the default.
 
 3. Run Prisma migrations:
 
@@ -158,10 +160,11 @@ If `OPENAI_API_KEY` is not set or the OpenAI call fails, the endpoint returns de
 
 ## Deployment Notes
 
-For Render or Railway, use a build command like:
+For Render, use:
 
 ```bash
-npm install && npm run prisma:deploy && npm run build
+Build command: npm install && npm run build
+Pre-deploy command: npm run prisma:deploy
 ```
 
 Use a start command like:
@@ -180,8 +183,9 @@ Set these additional environment variables for AI recommendations:
 1. Push this repo to GitHub.
 2. Go to [Render](https://render.com) and click **New +** -> **Blueprint**.
 3. Select this repository. Render will detect `render.yaml`.
-4. Set `JWT_SECRET` to a long random value.
-5. Click **Apply**.
+4. Render will create the managed Postgres instance defined in `render.yaml` and wire `DATABASE_URL` automatically.
+5. Set `JWT_SECRET` to a long random value.
+6. Click **Apply**.
 
 Render will publish your API at a URL like:
 `https://sgu-ecommerce-backend.onrender.com`
