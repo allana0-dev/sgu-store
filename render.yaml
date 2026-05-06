@@ -1,10 +1,3 @@
-databases:
-  - name: sgu-ecommerce-db
-    plan: free
-    region: oregon
-    databaseName: sgu_store
-    user: sgu_store_user
-
 services:
   - type: web
     name: sgu-ecommerce-backend
@@ -16,9 +9,7 @@ services:
     autoDeploy: true
     envVars:
       - key: DATABASE_URL
-        fromDatabase:
-          name: sgu-ecommerce-db
-          property: connectionString
+        sync: false
       - key: JWT_SECRET
         sync: false
       - key: JWT_EXPIRES_IN
